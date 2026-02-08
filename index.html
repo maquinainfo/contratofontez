@@ -1,0 +1,546 @@
+import React, { useState, useRef } from 'react';
+import { Printer, Copy, FileText, Wand2, Package, CreditCard, ChevronDown, ChevronUp, Scale } from 'lucide-react';
+
+const App = () => {
+  // Configuração dos Pacotes Baseados no Orçamento
+  const pacotesPredefinidos = [
+    {
+      id: 'civil',
+      nome: 'PACOTE FONTEZ CIVIL',
+      valor: '970,00',
+      extenso: 'novecentos e setenta reais',
+      parcelas: '3',
+      descricao: `PACOTE FONTEZ CIVIL
+• Fotos no cartório e mini-sessão pós cerimônia
+• 1 fotógrafo
+• 50 fotos digitais entregues via Google Drive
+• Fotos editadas (corte, cor e luz)
+• Cobertura fotográfica de até 1 hora
+
+Formas de pagamento padrão:
+• 40% para reserva da data e o restante até uma semana antes do evento`
+    },
+    {
+      id: 'elopement',
+      nome: 'ELOPEMENT WEDDING',
+      valor: '1.670,00',
+      extenso: 'um mil seiscentos e setenta reais',
+      parcelas: '3',
+      descricao: `PACOTE ELOPEMENT WEDDING
+• Cobertura do casamento: Cerimônia e sessão pós-cerimônia
+• 1 fotógrafo
+• 100 fotos digitais entregues via Google Drive
+• Fotos editadas (corte, cor e luz)
+• Cobertura fotográfica de até 2 horas
+
+Formas de pagamento padrão:
+• 40% para reserva da data e o restante até uma semana antes do evento`
+    },
+    {
+      id: 'intimista',
+      nome: 'FONTEZ INTIMISTA',
+      subtitulo: 'Até 50 convidados',
+      valor: '2.700,00',
+      extenso: 'dois mil e setecentos reais',
+      parcelas: '5',
+      descricao: `PACOTE FONTEZ INTIMISTA (Até 50 convidados)
+• Cobertura do casamento: Cerimônia e Recepção
+• 1 fotógrafo e 1 assistente de iluminação
+• 200 fotos digitais entregues via pendrive/link
+• Fotos editadas (corte, cor e luz)
+• Cobertura fotográfica de até 4 horas
+
+Formas de pagamento padrão:
+• 40% para reserva da data e o restante até uma semana antes do evento`
+    },
+    {
+      id: 'memorias',
+      nome: 'FONTEZ MEMÓRIAS',
+      subtitulo: 'Mais Vendido - Até 100 convidados',
+      destaque: true,
+      valor: '4.700,00',
+      extenso: 'quatro mil e setecentos reais',
+      parcelas: '5',
+      descricao: `PACOTE FONTEZ MEMÓRIAS (Até 100 convidados)
+• Cobertura do casamento: Making of, Cerimônia, Recepção e Festa
+• 2 fotógrafos
+• 400 fotos digitais entregues via pendrive/link
+• Fotos editadas (corte, cor e luz)
+• Cobertura fotográfica sem limite de tempo
+• 100 fotos reveladas 10x15cm
+
+PRÉ-WEDDING INCLUSO:
+• Sessão de fotos com duração de 2 horas
+• 50 fotos digitais entregues via Google Drive
+
+Formas de pagamento padrão:
+• 40% para reserva da data e o restante até uma semana antes do evento`
+    },
+    {
+      id: 'luxo',
+      nome: 'FONTEZ LUXO',
+      subtitulo: 'Completo com Drone e Álbum',
+      valor: '7.700,00',
+      extenso: 'sete mil e setecentos reais',
+      parcelas: '10',
+      descricao: `PACOTE FONTEZ LUXO
+• Cobertura do casamento Completa: do making of dos noivos até a festa
+• 2 fotógrafos e 1 assistente de iluminação
+• 600 fotos digitais entregues via pendrive/link
+• Fotos editadas (corte, cor e luz)
+• Cobertura fotográfica sem limite de tempo
+
+PRÉ-WEDDING INCLUSO:
+• 100 fotos digitais entregues via Google Drive
+• Sessão de fotos com duração de 2 horas
+• 1 vídeo reels com imagens de drone
+
+ÁLBUM ENCADERNADO:
+• 1 álbum encadernado do casamento (média 40 fotos)
+• Laminação em Linho
+• Tamanho 30x60cm (aberto)
+• Capa de Corino com gravação a laser e Caixa de Corino
+
+Formas de pagamento padrão:
+• 40% para reserva da data e o restante até uma semana antes do evento`
+    }
+  ];
+
+  const [formData, setFormData] = useState({
+    // Dados do Cliente
+    clienteNome: '',
+    clienteCpf: '',
+    clienteRg: '',
+    clienteTelefone: '',
+    clienteEmail: '',
+    
+    // Dados do Evento
+    eventoTipo: 'Casamento',
+    eventoData: '',
+    eventoHorario: '',
+    eventoLocal: '',
+    eventoCidade: 'Florianópolis',
+    
+    // Dados do Pacote
+    servicosDescricao: '',
+    valorNumerico: '',
+    valorExtenso: '',
+    parcelas: '',
+    
+    // Dados da Assinatura
+    cidadeAssinatura: 'Imbituba',
+    dataAssinatura: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }),
+
+    // Cláusulas (Texto Padrão)
+    clausula2Resto: `2.2- A data fica reservada mediante ao pagamento.
+2.3 - As fotos sofrerão pequenas correções quando necessário, como por exemplo, correções leves na face. Alterações grandes não serão realizadas, por exemplo, tirar uma pessoa da foto, ou manipular a cena retirando ou colocando novos itens. Caso isso seja solicitado, será cobrado separadamente;
+2.4 – O CONTRATADO se resguarda o direito de expor sua marca nos produtos ora contratados.
+2.5 – Fotos adicionais ao pacote serão cobradas a importância de R$9,50 por foto.
+2.6 – A CONTRATANTE, autoriza, desde já, a publicação das fotos objeto do presente contrato no endereço eletrônico do CONTRATADO, bem como a presença de fotógrafo(s) assistente(s) que ocasionalmente venha a acompanhá-lo, podendo as fotos serem utilizadas em material publicitário pessoal, participação em concursos e edição de livros, uso dessas imagens em jornais e revistas sem a prévia autorização da CONTRATANTE.
+2.7 – Caso haja falta de segurança para a equipe ou qualquer tipo de violência, o serviço será interrompido, não cabendo, nesse caso, qualquer pedido de indenização por ambas as partes;`,
+    
+    clausula3: `3.1 As partes reconhecem que a data contratada é exclusiva, ficando o CONTRATADO impedido de aceitar outros eventos na mesma data, caracterizando perda de oportunidade comercial.
+3.2 Em caso de desistência por parte da CONTRATANTE, os valores pagos até o momento da desistência poderão ser retidos parcialmente, a título de reserva de data, custos administrativos e perda de agenda, não sendo considerados pagamento antecipado pelos serviços.
+3.3 O percentual retido será de 40% (quarenta por cento) do valor total do contrato. O saldo eventualmente pago além desse percentual será devolvido em parcelas no prazo de 180 dias úteis.
+3.4 Alternativamente, a CONTRATANTE poderá optar pelo reagendamento, sujeito à disponibilidade de agenda do CONTRATADO, mantendo-se o valor já pago como crédito.
+3.5 Em caso de desistência por parte do CONTRATADO, os valores pagos serão devolvidos integralmente, no prazo máximo de 30 dias úteis.`,
+
+    clausula4: `4.0 - O CONTRATADO não se responsabiliza por fotos que porventura não sejam realizadas devido à falta de tempo hábil ou por falta de pedido no dia do evento por parte da CONTRATANTE, ou até mesmo por fotos que venham a ser prejudicadas em função de outros profissionais, como: cinegrafistas, cerimonial, celebrante, etc.
+4.1 – Fica aqui acordado a exclusividade na cobertura fotográfica do evento, vedando assim outros fotógrafos, que poderiam aparecer no raio de composição de nossa equipe fotográfica gerando a perda de registros únicos.
+4.2 - A alimentação e um lugar adequado para a equipe será fornecida pelo contratante.
+4.3 - As fotos serão armazenadas em servidores de backup do CONTRATADO por um período de 1 ano e para solicitação de uma 2ª via da mídia com todas as fotos em alta resolução será cobrado o valor de 30% do valor total mencionado neste contrato.
+4.4 - Este contrato tem a validade de 12 meses após a data do evento e após esse período o CONTRATADO não terá mais nenhuma responsabilidade para com a CONTRATANTE. Para os contratos com álbum, a sua confecção solicitada após 12 meses da data do evento incorrerá em um reajuste de 30% do valor total descrito neste contrato.`,
+
+    clausula5: `Elegem as partes o foro da comarca da capital de Santa Catarina, com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir eventuais litígios porventura oriundos do presente contrato.`
+  });
+
+  const [importText, setImportText] = useState('');
+  const [copied, setCopied] = useState(false);
+  
+  // Estados para abrir/fechar as caixas
+  const [isEditDetailsOpen, setIsEditDetailsOpen] = useState(false);
+  const [isEditClausesOpen, setIsEditClausesOpen] = useState(false);
+  
+  const contractRef = useRef();
+
+  // Função para selecionar pacote
+  const selecionarPacote = (pacote) => {
+    setFormData(prev => ({
+      ...prev,
+      servicosDescricao: pacote.descricao,
+      valorNumerico: pacote.valor,
+      valorExtenso: pacote.extenso,
+      parcelas: pacote.parcelas
+    }));
+  };
+
+  const handleImport = () => {
+    const lines = importText.split('\n');
+    const newData = { ...formData };
+    
+    const extract = (line, keywords) => {
+      const cleanLine = line.replace(/^[\s*•-]+/, '').trim();
+      const regex = new RegExp(`^(?:${keywords})\\s*[:=]\\s*(.*)`, 'i');
+      const match = cleanLine.match(regex);
+      return match ? match[1].trim() : null;
+    };
+
+    lines.forEach(line => {
+      const nome = extract(line, 'Nome|Nome completo|Cliente');
+      if (nome) newData.clienteNome = nome;
+      const cpf = extract(line, 'CPF');
+      if (cpf) newData.clienteCpf = cpf;
+      const rg = extract(line, 'RG');
+      if (rg) newData.clienteRg = rg;
+      const tel = extract(line, 'Telefone|Celular|Tel|Whats');
+      if (tel) newData.clienteTelefone = tel;
+      const email = extract(line, 'E-MAIL|Email');
+      if (email) newData.clienteEmail = email;
+      const data = extract(line, 'Data|Data do evento|Dia');
+      if (data) newData.eventoData = data;
+      const hora = extract(line, 'Horário|Hora|Horário do evento|Inicio');
+      if (hora) newData.eventoHorario = hora;
+      const local = extract(line, 'Local|Local do evento|Onde');
+      if (local) newData.eventoLocal = local;
+    });
+
+    setFormData(newData);
+    setImportText('');
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleCopy = () => {
+    if (contractRef.current) {
+      const text = contractRef.current.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  };
+
+  const contratado = {
+    nome: "Eduardo Hercílio Fontes - Fontez Fotografia",
+    endereco: "Rua três de Outubro nº 61, Imbituba",
+    cnpj: "47.570.013/0001-60",
+    cpf: "048067959-25"
+  };
+
+  return (
+    // Adicionada classe 'main-container' para referência no CSS de impressão
+    <div className="main-container min-h-screen bg-gray-100 flex flex-col md:flex-row font-sans">
+      <style>{`
+        @media print {
+          @page { margin: 1.5cm; size: A4; }
+          body { -webkit-print-color-adjust: exact; background: white; }
+          
+          /* Esconde tudo que não é essencial */
+          .no-print { display: none !important; }
+          
+          /* Reseta o layout do container principal para bloco, removendo flex que pode quebrar a impressão */
+          .main-container {
+            display: block !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+
+          /* Força a área de impressão a ocupar a tela toda */
+          .print-area { 
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+            background: white !important;
+          }
+        }
+      `}</style>
+
+      {/* PAINEL DE CONTROLE */}
+      <div className="w-full md:w-5/12 bg-white border-r border-gray-200 p-6 overflow-y-auto h-screen no-print shadow-lg z-10 scrollbar-thin">
+        <div className="flex items-center gap-2 mb-6 text-blue-800">
+          <FileText size={24} />
+          <h1 className="text-xl font-bold">Gerador de Contrato - Fontez</h1>
+        </div>
+
+        <div className="space-y-6">
+
+          {/* Importação Mágica */}
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+            <div className="flex items-center gap-2 mb-2 text-blue-800 font-bold text-sm">
+              <Wand2 size={16} />
+              <h3>Importar Dados (WhatsApp/Email)</h3>
+            </div>
+            <textarea
+              className="w-full text-xs p-2 border border-blue-200 rounded-md mb-2"
+              rows={3}
+              placeholder="Cole aqui os dados do cliente..."
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+            />
+            <button onClick={handleImport} disabled={!importText} className="w-full bg-blue-600 text-white text-xs font-bold py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+              Preencher Dados Automaticamente
+            </button>
+          </div>
+          
+          {/* Dados Cliente e Evento */}
+          <section className="grid grid-cols-2 gap-3">
+            <div className="col-span-2"><h2 className="text-xs uppercase font-bold text-gray-500 border-b pb-1">Cliente</h2></div>
+            <input type="text" name="clienteNome" value={formData.clienteNome} onChange={handleChange} className="col-span-2 text-sm border p-2 rounded" placeholder="Nome Completo" />
+            <input type="text" name="clienteCpf" value={formData.clienteCpf} onChange={handleChange} className="text-sm border p-2 rounded" placeholder="CPF" />
+            <input type="text" name="clienteRg" value={formData.clienteRg} onChange={handleChange} className="text-sm border p-2 rounded" placeholder="RG" />
+            <input type="text" name="clienteTelefone" value={formData.clienteTelefone} onChange={handleChange} className="text-sm border p-2 rounded" placeholder="Telefone" />
+            <input type="text" name="clienteEmail" value={formData.clienteEmail} onChange={handleChange} className="text-sm border p-2 rounded" placeholder="Email" />
+            
+            <div className="col-span-2 mt-2"><h2 className="text-xs uppercase font-bold text-gray-500 border-b pb-1">Evento</h2></div>
+            <input type="text" name="eventoData" value={formData.eventoData} onChange={handleChange} className="text-sm border p-2 rounded" placeholder="Data (dd/mm/aaaa)" />
+            <input type="text" name="eventoHorario" value={formData.eventoHorario} onChange={handleChange} className="text-sm border p-2 rounded" placeholder="Horário" />
+            <input type="text" name="eventoLocal" value={formData.eventoLocal} onChange={handleChange} className="col-span-2 text-sm border p-2 rounded" placeholder="Local do Evento" />
+          </section>
+
+          {/* SELEÇÃO DE PACOTES */}
+          <section>
+            <div className="flex items-center gap-2 mb-3 border-b pb-1">
+              <Package size={16} className="text-gray-600"/>
+              <h2 className="text-xs uppercase font-bold text-gray-500">Selecione o Pacote</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-2">
+              {pacotesPredefinidos.map((pacote) => (
+                <button
+                  key={pacote.id}
+                  onClick={() => selecionarPacote(pacote)}
+                  className={`group relative flex flex-col items-start p-3 border rounded-lg transition-all hover:shadow-md text-left
+                    ${pacote.destaque ? 'bg-amber-50 border-amber-200 hover:border-amber-400' : 'bg-white border-gray-200 hover:border-blue-400'}
+                  `}
+                >
+                  <div className="flex justify-between w-full">
+                    <span className={`font-bold text-sm ${pacote.destaque ? 'text-amber-800' : 'text-gray-800'}`}>{pacote.nome}</span>
+                    <span className="font-mono text-sm font-bold text-green-700">R$ {pacote.valor}</span>
+                  </div>
+                  {pacote.subtitulo && <span className="text-xs text-gray-500 mb-1">{pacote.subtitulo}</span>}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Edição Fina do Pacote (CAIXA FECHADA) */}
+          <section className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+             <button 
+                onClick={() => setIsEditDetailsOpen(!isEditDetailsOpen)}
+                className="w-full flex items-center justify-between p-4 bg-gray-100 hover:bg-gray-200 transition-colors text-left"
+             >
+                <div className="flex items-center gap-2">
+                  <CreditCard size={16} className="text-gray-600"/>
+                  <h2 className="text-xs uppercase font-bold text-gray-600">
+                    Editar Descrição e Preço
+                  </h2>
+                </div>
+                {isEditDetailsOpen ? <ChevronUp size={16} className="text-gray-500"/> : <ChevronDown size={16} className="text-gray-500"/>}
+            </button>
+            
+            {isEditDetailsOpen && (
+              <div className="p-4 space-y-3 bg-white border-t border-gray-200 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div>
+                  <label className="text-xs font-bold text-gray-600">Descrição Completa</label>
+                  <textarea 
+                    rows={8} 
+                    name="servicosDescricao" 
+                    value={formData.servicosDescricao} 
+                    onChange={handleChange} 
+                    className="w-full mt-1 text-xs p-2 border rounded font-mono bg-white" 
+                    placeholder="Selecione um pacote acima ou digite aqui..."
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-gray-600">Valor (R$)</label>
+                    <input type="text" name="valorNumerico" value={formData.valorNumerico} onChange={handleChange} className="w-full mt-1 text-sm p-2 border rounded bg-white" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600">Max Parcelas</label>
+                    <input type="number" name="parcelas" value={formData.parcelas} onChange={handleChange} className="w-full mt-1 text-sm p-2 border rounded bg-white" />
+                  </div>
+                </div>
+                
+                <div>
+                    <label className="text-xs font-bold text-gray-600">Valor por Extenso</label>
+                    <input type="text" name="valorExtenso" value={formData.valorExtenso} onChange={handleChange} className="w-full mt-1 text-sm p-2 border rounded bg-white" />
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Edição de Cláusulas (NOVA CAIXA FECHADA) */}
+          <section className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+             <button 
+                onClick={() => setIsEditClausesOpen(!isEditClausesOpen)}
+                className="w-full flex items-center justify-between p-4 bg-gray-100 hover:bg-gray-200 transition-colors text-left"
+             >
+                <div className="flex items-center gap-2">
+                  <Scale size={16} className="text-gray-600"/>
+                  <h2 className="text-xs uppercase font-bold text-gray-600">
+                    Personalizar Cláusulas
+                  </h2>
+                </div>
+                {isEditClausesOpen ? <ChevronUp size={16} className="text-gray-500"/> : <ChevronDown size={16} className="text-gray-500"/>}
+            </button>
+            
+            {isEditClausesOpen && (
+              <div className="p-4 space-y-4 bg-white border-t border-gray-200 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div>
+                  <label className="text-xs font-bold text-gray-600 block mb-1">Cláusula 2 (Direitos e Deveres - 2.2 em diante)</label>
+                  <textarea 
+                    rows={6} 
+                    name="clausula2Resto" 
+                    value={formData.clausula2Resto} 
+                    onChange={handleChange} 
+                    className="w-full text-xs p-2 border rounded font-mono bg-white" 
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-600 block mb-1">Cláusula 3 (Desistência e Multas)</label>
+                  <textarea 
+                    rows={6} 
+                    name="clausula3" 
+                    value={formData.clausula3} 
+                    onChange={handleChange} 
+                    className="w-full text-xs p-2 border rounded font-mono bg-white" 
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-600 block mb-1">Cláusula 4 (Diversos)</label>
+                  <textarea 
+                    rows={6} 
+                    name="clausula4" 
+                    value={formData.clausula4} 
+                    onChange={handleChange} 
+                    className="w-full text-xs p-2 border rounded font-mono bg-white" 
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-600 block mb-1">Cláusula 5 (Foro)</label>
+                  <textarea 
+                    rows={2} 
+                    name="clausula5" 
+                    value={formData.clausula5} 
+                    onChange={handleChange} 
+                    className="w-full text-xs p-2 border rounded font-mono bg-white" 
+                  />
+                </div>
+              </div>
+            )}
+          </section>
+
+          <div className="pt-2 sticky bottom-0 bg-white pb-6 border-t">
+            <button onClick={handlePrint} className="w-full bg-blue-800 hover:bg-blue-900 text-white font-bold py-3 px-4 rounded flex items-center justify-center gap-2 mb-2">
+              <Printer size={20} /> Imprimir / Salvar PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ÁREA DE PREVIEW */}
+      <div className="w-full md:w-7/12 p-8 overflow-y-auto print-area bg-gray-50">
+        <div ref={contractRef} className="max-w-[21cm] mx-auto bg-white p-[2cm] shadow-xl text-justify text-gray-900 leading-relaxed font-serif text-sm print-area">
+          
+          <h1 className="text-center font-bold text-lg mb-6 uppercase">CONTRATO DE PRODUÇÃO FOTOGRÁFICA</h1>
+          
+          <p className="mb-4">
+            <strong>EVENTO:</strong> {formData.eventoTipo} em {formData.eventoData}
+          </p>
+
+          <p className="mb-4">
+            Pelo presente instrumento particular de contrato de prestação de serviços fotográficos, de um lado, denominada 
+            <strong> CONTRATANTE: {formData.clienteNome || "___________"}</strong>, 
+            CPF: {formData.clienteCpf || "___________"}, 
+            RG: {formData.clienteRg || "___________"}, 
+            telefone {formData.clienteTelefone || "___________"}, 
+            e-mail: {formData.clienteEmail || "___________"} 
+            de outro lado denominado <strong>CONTRATADO: {contratado.nome}</strong>, 
+            residente e domiciliado na {contratado.endereco}, 
+            CNPJ {contratado.cnpj} têm justo e acordado o que consta das cláusulas e condições seguintes referentes a prestação de serviço de cobertura fotográfica.
+          </p>
+
+          <h2 className="text-center font-bold mt-6 mb-2 uppercase border-t border-b py-1">DADOS DO EVENTO</h2>
+          <p className="mb-2"><strong>Data:</strong> {formData.eventoData}</p>
+          <p className="mb-2"><strong>Horário:</strong> {formData.eventoHorario}</p>
+          <p className="mb-4"><strong>Local:</strong> {formData.eventoLocal} - {formData.eventoCidade}</p>
+
+          <h3 className="font-bold mt-6 mb-2">Cláusula 1º.: DO SERVIÇO</h3>
+          <p className="mb-2">O valor deste contrato se refere a realização dos seguintes serviços:</p>
+          <div className="whitespace-pre-wrap mb-4 ml-4 font-sans text-xs bg-gray-50 p-3 border rounded border-gray-200">
+            {formData.servicosDescricao || "(Selecione um pacote ao lado para preencher)"}
+          </div>
+
+          <h3 className="font-bold mt-6 mb-2">Cláusula 2º.: DO PREÇO, CONDIÇÕES DE PAGAMENTO e PRODUTO</h3>
+          <p className="mb-2">
+            2.1- O valor total dos serviços/produtos é de <strong>R$ {formData.valorNumerico || "0,00"} ({formData.valorExtenso || "zero reais"})</strong>, a ser pago por meio de link de pagamento, no cartão de crédito, em até {formData.parcelas || "1"} parcelas sem juros.
+          </p>
+          <div className="whitespace-pre-wrap mb-2 font-serif text-sm text-gray-900">
+            {formData.clausula2Resto}
+          </div>
+
+          <h3 className="font-bold mt-6 mb-2">Cláusula 3ª – DA DESISTÊNCIA E RESERVA DE DATA</h3>
+          <div className="whitespace-pre-wrap mb-2 font-serif text-sm text-gray-900">
+            {formData.clausula3}
+          </div>
+
+          <h3 className="font-bold mt-6 mb-2">Cláusula 4º.: DIVERSOS</h3>
+          <div className="whitespace-pre-wrap mb-2 font-serif text-sm text-gray-900">
+            {formData.clausula4}
+          </div>
+
+          <h3 className="font-bold mt-6 mb-2">Cláusula 5º. DO FORO</h3>
+          <div className="whitespace-pre-wrap mb-6 font-serif text-sm text-gray-900">
+            {formData.clausula5}
+          </div>
+
+          <p className="mb-12">
+            E, por acharem em perfeito acordo, em tudo quanto neste instrumento particular foi lavrado, obrigam-se a cumprir o presente contrato, assinando-o em duas vias de igual teor.
+          </p>
+
+          <div className="text-center mt-12 mb-16">
+            <p className="mb-12">{formData.cidadeAssinatura}, {formData.dataAssinatura}</p>
+            
+            <div className="flex flex-col md:flex-row justify-between gap-12">
+              <div className="flex-1">
+                <div className="border-t border-black pt-2 mb-1 w-full max-w-[250px] mx-auto"></div>
+                <p className="font-bold">{contratado.nome}</p>
+                <p>CPF: {contratado.cpf}</p>
+                <p className="text-sm font-bold mt-1">CONTRATADO</p>
+              </div>
+
+              <div className="flex-1">
+                <div className="border-t border-black pt-2 mb-1 w-full max-w-[250px] mx-auto"></div>
+                <p className="font-bold">{formData.clienteNome || "Nome do Cliente"}</p>
+                <p>CPF: {formData.clienteCpf || "..."}</p>
+                <p className="text-sm font-bold mt-1">CONTRATANTE</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
