@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Printer, Copy, FileText, Wand2, Package, CreditCard, ChevronDown, ChevronUp, Scale, CheckCircle } from 'lucide-react';
 
 const App = () => {
-  // Configuração dos Pacotes Baseados no Orçamento (Atualizado conforme PDF)
+  // --- CONFIGURAÇÃO DOS PACOTES ---
   const pacotesPredefinidos = [
     {
       id: 'civil',
@@ -106,6 +106,7 @@ Formas de pagamento padrão:
     }
   ];
 
+  // --- ESTADO DO FORMULÁRIO ---
   const [formData, setFormData] = useState({
     // Dados do Cliente
     clienteNome: '',
@@ -161,7 +162,7 @@ Formas de pagamento padrão:
   const [isEditDetailsOpen, setIsEditDetailsOpen] = useState(false);
   const [isEditClausesOpen, setIsEditClausesOpen] = useState(false);
   
-  const contractRef = useRef();
+  const contractRef = useRef(null);
 
   // Função para selecionar pacote
   const selecionarPacote = (pacote) => {
@@ -172,14 +173,19 @@ Formas de pagamento padrão:
       valorExtenso: pacote.extenso,
       parcelas: pacote.parcelas
     }));
+    // Abre os detalhes automaticamente para conferência
+    setIsEditDetailsOpen(true);
   };
 
   const handleImport = () => {
+    if (!importText) return;
+
     const lines = importText.split('\n');
     const newData = { ...formData };
     
     const extract = (line, keywords) => {
       const cleanLine = line.replace(/^[\s*•-]+/, '').trim();
+      // Regex melhorada para capturar variações de maiúsculas/minúsculas
       const regex = new RegExp(`^(?:${keywords})\\s*[:=]\\s*(.*)`, 'i');
       const match = cleanLine.match(regex);
       return match ? match[1].trim() : null;
@@ -192,9 +198,9 @@ Formas de pagamento padrão:
       if (cpf) newData.clienteCpf = cpf;
       const rg = extract(line, 'RG');
       if (rg) newData.clienteRg = rg;
-      const tel = extract(line, 'Telefone|Celular|Tel|Whats');
+      const tel = extract(line, 'Telefone|Celular|Tel|Whats|Contato');
       if (tel) newData.clienteTelefone = tel;
-      const email = extract(line, 'E-MAIL|Email');
+      const email = extract(line, 'E-MAIL|Email|Mail');
       if (email) newData.clienteEmail = email;
       const data = extract(line, 'Data|Data do evento|Dia');
       if (data) newData.eventoData = data;
@@ -217,37 +223,20 @@ Formas de pagamento padrão:
     window.print();
   };
 
-  const handleCopy = () => {
+  // Método de cópia modernizado e seguro
+  const handleCopy = async () => {
     if (contractRef.current) {
       const text = contractRef.current.innerText;
       
-      // Método seguro: cria um elemento temporário para copiar
-      // Isso evita o erro de 'Permissions Policy' no Netlify/Chrome
-      const textArea = document.createElement("textarea");
-      textArea.value = text;
-      
-      // Garante que o elemento não seja visível visualmente mas faça parte do DOM
-      textArea.style.position = "fixed";
-      textArea.style.left = "-9999px";
-      textArea.style.top = "0";
-      document.body.appendChild(textArea);
-      
-      textArea.focus();
-      textArea.select();
-      
       try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        } else {
-            console.error("Falha ao copiar texto via execCommand");
-        }
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       } catch (err) {
-        console.error("Erro ao executar comando de cópia: ", err);
+        console.error("Falha ao copiar texto: ", err);
+        // Fallback para navegadores muito antigos (opcional, mas mantido por segurança)
+        alert("Não foi possível copiar automaticamente. Use Ctrl+P para salvar como PDF ou selecione o texto manualmente.");
       }
-      
-      document.body.removeChild(textArea);
     }
   };
 
@@ -255,45 +244,52 @@ Formas de pagamento padrão:
     nome: "Eduardo Hercílio Fontes - Fontez Fotografia",
     endereco: "Rua três de Outubro nº 61, Imbituba",
     cnpj: "47.570.013/0001-60",
-    cpf: "048067959-25"
+    cpf: "048.067.959-25" 
   };
 
   return (
-    // Adicionada classe 'main-container' para referência no CSS de impressão
     <div className="main-container min-h-screen bg-gray-100 flex flex-col md:flex-row font-sans">
       <style>{`
         @media print {
-          @page { margin: 1.5cm; size: A4; }
-          body { -webkit-print-color-adjust: exact; background: white; }
+          @page { margin: 1cm; size: A4; }
+          body { 
+            -webkit-print-color-adjust: exact; 
+            background: white; 
+            color: black;
+          }
           
-          /* Esconde tudo que não é essencial */
+          /* Oculta a barra lateral na impressão */
           .no-print { display: none !important; }
           
-          /* Reseta o layout do container principal para bloco, removendo flex que pode quebrar a impressão */
+          /* Ajusta o container principal */
           .main-container {
             display: block !important;
             height: auto !important;
             overflow: visible !important;
+            background: white !important;
           }
 
-          /* Força a área de impressão a ocupar a tela toda */
+          /* Configura a área de impressão */
           .print-area { 
             display: block !important;
             width: 100% !important;
             height: auto !important;
-            position: absolute;
-            top: 0;
-            left: 0;
+            position: relative !important;
+            top: 0 !important;
+            left: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
             box-shadow: none !important;
             overflow: visible !important;
             background: white !important;
           }
+          
+          /* Remove scrollbars */
+          ::-webkit-scrollbar { display: none; }
         }
       `}</style>
 
-      {/* PAINEL DE CONTROLE */}
+      {/* --- PAINEL DE CONTROLE (BARRA LATERAL) --- */}
       <div className="w-full md:w-5/12 bg-white border-r border-gray-200 p-6 overflow-y-auto h-screen no-print shadow-lg z-10 scrollbar-thin">
         <div className="flex items-center gap-2 mb-6 text-blue-800">
           <FileText size={24} />
@@ -309,13 +305,17 @@ Formas de pagamento padrão:
               <h3>Importar Dados (WhatsApp/Email)</h3>
             </div>
             <textarea
-              className="w-full text-xs p-2 border border-blue-200 rounded-md mb-2"
+              className="w-full text-xs p-2 border border-blue-200 rounded-md mb-2 focus:ring-2 focus:ring-blue-500 outline-none"
               rows={3}
-              placeholder="Cole aqui os dados do cliente..."
+              placeholder="Cole aqui os dados do cliente (ex: Nome: João, CPF: 123...)"
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
             />
-            <button onClick={handleImport} disabled={!importText} className="w-full bg-blue-600 text-white text-xs font-bold py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+            <button 
+              onClick={handleImport} 
+              disabled={!importText} 
+              className="w-full bg-blue-600 text-white text-xs font-bold py-2 rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
               Preencher Dados Automaticamente
             </button>
           </div>
@@ -323,16 +323,16 @@ Formas de pagamento padrão:
           {/* Dados Cliente e Evento */}
           <section className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><h2 className="text-xs uppercase font-bold text-gray-500 border-b pb-1">Cliente</h2></div>
-            <input type="text" name="clienteNome" value={formData.clienteNome} onChange={handleChange} className="col-span-2 text-sm border p-2 rounded" placeholder="Nome Completo" />
-            <input type="text" name="clienteCpf" value={formData.clienteCpf} onChange={handleChange} className="text-sm border p-2 rounded" placeholder="CPF" />
-            <input type="text" name="clienteRg" value={formData.clienteRg} onChange={handleChange} className="text-sm border p-2 rounded" placeholder="RG" />
-            <input type="text" name="clienteTelefone" value={formData.clienteTelefone} onChange={handleChange} className="text-sm border p-2 rounded" placeholder="Telefone" />
-            <input type="text" name="clienteEmail" value={formData.clienteEmail} onChange={handleChange} className="text-sm border p-2 rounded" placeholder="Email" />
+            <input type="text" name="clienteNome" value={formData.clienteNome} onChange={handleChange} autoComplete="off" className="col-span-2 text-sm border p-2 rounded focus:ring-1 focus:ring-blue-500" placeholder="Nome Completo" />
+            <input type="text" name="clienteCpf" value={formData.clienteCpf} onChange={handleChange} autoComplete="off" className="text-sm border p-2 rounded" placeholder="CPF" />
+            <input type="text" name="clienteRg" value={formData.clienteRg} onChange={handleChange} autoComplete="off" className="text-sm border p-2 rounded" placeholder="RG" />
+            <input type="text" name="clienteTelefone" value={formData.clienteTelefone} onChange={handleChange} autoComplete="off" className="text-sm border p-2 rounded" placeholder="Telefone" />
+            <input type="text" name="clienteEmail" value={formData.clienteEmail} onChange={handleChange} autoComplete="off" className="text-sm border p-2 rounded" placeholder="Email" />
             
             <div className="col-span-2 mt-2"><h2 className="text-xs uppercase font-bold text-gray-500 border-b pb-1">Evento</h2></div>
-            <input type="text" name="eventoData" value={formData.eventoData} onChange={handleChange} className="text-sm border p-2 rounded" placeholder="Data (dd/mm/aaaa)" />
-            <input type="text" name="eventoHorario" value={formData.eventoHorario} onChange={handleChange} className="text-sm border p-2 rounded" placeholder="Horário" />
-            <input type="text" name="eventoLocal" value={formData.eventoLocal} onChange={handleChange} className="col-span-2 text-sm border p-2 rounded" placeholder="Local do Evento" />
+            <input type="text" name="eventoData" value={formData.eventoData} onChange={handleChange} autoComplete="off" className="text-sm border p-2 rounded" placeholder="Data (dd/mm/aaaa)" />
+            <input type="text" name="eventoHorario" value={formData.eventoHorario} onChange={handleChange} autoComplete="off" className="text-sm border p-2 rounded" placeholder="Horário" />
+            <input type="text" name="eventoLocal" value={formData.eventoLocal} onChange={handleChange} autoComplete="off" className="col-span-2 text-sm border p-2 rounded" placeholder="Local do Evento" />
           </section>
 
           {/* SELEÇÃO DE PACOTES */}
@@ -361,7 +361,7 @@ Formas de pagamento padrão:
             </div>
           </section>
 
-          {/* Edição Fina do Pacote (CAIXA FECHADA) */}
+          {/* Edição Fina do Pacote */}
           <section className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
              <button 
                 onClick={() => setIsEditDetailsOpen(!isEditDetailsOpen)}
@@ -377,7 +377,7 @@ Formas de pagamento padrão:
             </button>
             
             {isEditDetailsOpen && (
-              <div className="p-4 space-y-3 bg-white border-t border-gray-200 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="p-4 space-y-3 bg-white border-t border-gray-200">
                 <div>
                   <label className="text-xs font-bold text-gray-600">Descrição Completa</label>
                   <textarea 
@@ -385,7 +385,7 @@ Formas de pagamento padrão:
                     name="servicosDescricao" 
                     value={formData.servicosDescricao} 
                     onChange={handleChange} 
-                    className="w-full mt-1 text-xs p-2 border rounded font-mono bg-white" 
+                    className="w-full mt-1 text-xs p-2 border rounded font-mono bg-white focus:ring-1 focus:ring-blue-500" 
                     placeholder="Selecione um pacote acima ou digite aqui..."
                   />
                 </div>
@@ -409,7 +409,7 @@ Formas de pagamento padrão:
             )}
           </section>
 
-          {/* Edição de Cláusulas (NOVA CAIXA FECHADA) */}
+          {/* Edição de Cláusulas */}
           <section className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
              <button 
                 onClick={() => setIsEditClausesOpen(!isEditClausesOpen)}
@@ -425,7 +425,7 @@ Formas de pagamento padrão:
             </button>
             
             {isEditClausesOpen && (
-              <div className="p-4 space-y-4 bg-white border-t border-gray-200 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="p-4 space-y-4 bg-white border-t border-gray-200">
                 <div>
                   <label className="text-xs font-bold text-gray-600 block mb-1">Cláusula 2 (Direitos e Deveres - 2.2 em diante)</label>
                   <textarea 
@@ -474,7 +474,7 @@ Formas de pagamento padrão:
           </section>
 
           <div className="pt-2 sticky bottom-0 bg-white pb-6 border-t flex flex-col gap-2">
-            <button onClick={handlePrint} className="w-full bg-blue-800 hover:bg-blue-900 text-white font-bold py-3 px-4 rounded flex items-center justify-center gap-2">
+            <button onClick={handlePrint} className="w-full bg-blue-800 hover:bg-blue-900 text-white font-bold py-3 px-4 rounded flex items-center justify-center gap-2 transition-colors">
               <Printer size={20} /> Imprimir / Salvar PDF
             </button>
             <button 
@@ -488,7 +488,7 @@ Formas de pagamento padrão:
         </div>
       </div>
 
-      {/* ÁREA DE PREVIEW */}
+      {/* --- ÁREA DE PREVIEW / IMPRESSÃO --- */}
       <div className="w-full md:w-7/12 p-8 overflow-y-auto print-area bg-gray-50">
         <div ref={contractRef} className="max-w-[21cm] mx-auto bg-white p-[2cm] shadow-xl text-justify text-gray-900 leading-relaxed font-serif text-sm print-area">
           
@@ -500,11 +500,11 @@ Formas de pagamento padrão:
 
           <p className="mb-4">
             Pelo presente instrumento particular de contrato de prestação de serviços fotográficos, de um lado, denominada 
-            <strong> CONTRATANTE: {formData.clienteNome || "___________"}</strong>, 
-            CPF: {formData.clienteCpf || "___________"}, 
-            RG: {formData.clienteRg || "___________"}, 
-            telefone {formData.clienteTelefone || "___________"}, 
-            e-mail: {formData.clienteEmail || "___________"} 
+            <strong> CONTRATANTE: {formData.clienteNome || "________________________"}</strong>, 
+            CPF: {formData.clienteCpf || "_________________"}, 
+            RG: {formData.clienteRg || "_________________"}, 
+            telefone {formData.clienteTelefone || "_________________"}, 
+            e-mail: {formData.clienteEmail || "_________________"} 
             de outro lado denominado <strong>CONTRATADO: {contratado.nome}</strong>, 
             residente e domiciliado na {contratado.endereco}, 
             CNPJ {contratado.cnpj} têm justo e acordado o que consta das cláusulas e condições seguintes referentes a prestação de serviço de cobertura fotográfica.
@@ -517,7 +517,7 @@ Formas de pagamento padrão:
 
           <h3 className="font-bold mt-6 mb-2">Cláusula 1º.: DO SERVIÇO</h3>
           <p className="mb-2">O valor deste contrato se refere a realização dos seguintes serviços:</p>
-          <div className="whitespace-pre-wrap mb-4 ml-4 font-sans text-xs bg-gray-50 p-3 border rounded border-gray-200">
+          <div className="whitespace-pre-wrap mb-4 ml-4 font-sans text-xs bg-gray-50 p-3 border rounded border-gray-200 print:bg-transparent print:border-none print:p-0">
             {formData.servicosDescricao || "(Selecione um pacote ao lado para preencher)"}
           </div>
 
@@ -548,10 +548,10 @@ Formas de pagamento padrão:
             E, por acharem em perfeito acordo, em tudo quanto neste instrumento particular foi lavrado, obrigam-se a cumprir o presente contrato, assinando-o em duas vias de igual teor.
           </p>
 
-          <div className="text-center mt-12 mb-16">
+          <div className="text-center mt-12 mb-16 break-inside-avoid">
             <p className="mb-12">{formData.cidadeAssinatura}, {formData.dataAssinatura}</p>
             
-            <div className="flex flex-col md:flex-row justify-between gap-12">
+            <div className="flex flex-col md:flex-row justify-between gap-12 print:flex-row">
               <div className="flex-1">
                 <div className="border-t border-black pt-2 mb-1 w-full max-w-[250px] mx-auto"></div>
                 <p className="font-bold">{contratado.nome}</p>
