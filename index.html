@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Printer, Copy, FileText, Wand2, Package, CreditCard, ChevronDown, ChevronUp, Scale, CheckCircle } from 'lucide-react';
 
 const App = () => {
-  // Configuração dos Pacotes Baseados no Orçamento
+  // Configuração dos Pacotes Baseados no Orçamento (Atualizado conforme PDF)
   const pacotesPredefinidos = [
     {
       id: 'civil',
@@ -46,7 +46,7 @@ Formas de pagamento padrão:
       descricao: `PACOTE FONTEZ INTIMISTA (Até 50 convidados)
 • Cobertura do casamento: Cerimônia e Recepção
 • 1 fotógrafo e 1 assistente de iluminação
-• 200 fotos digitais entregues via pendrive/link
+• 200 fotos digitais entregues via Pencard
 • Fotos editadas (corte, cor e luz)
 • Cobertura fotográfica de até 4 horas
 
@@ -64,7 +64,7 @@ Formas de pagamento padrão:
       descricao: `PACOTE FONTEZ MEMÓRIAS (Até 100 convidados)
 • Cobertura do casamento: Making of, Cerimônia, Recepção e Festa
 • 2 fotógrafos
-• 400 fotos digitais entregues via pendrive/link
+• 400 fotos digitais entregues via Pencard
 • Fotos editadas (corte, cor e luz)
 • Cobertura fotográfica sem limite de tempo
 • 100 fotos reveladas 10x15cm
@@ -86,7 +86,7 @@ Formas de pagamento padrão:
       descricao: `PACOTE FONTEZ LUXO
 • Cobertura do casamento Completa: do making of dos noivos até a festa
 • 2 fotógrafos e 1 assistente de iluminação
-• 600 fotos digitais entregues via pendrive/link
+• 600 fotos digitais entregues via Pencard
 • Fotos editadas (corte, cor e luz)
 • Cobertura fotográfica sem limite de tempo
 
@@ -221,7 +221,8 @@ Formas de pagamento padrão:
     if (contractRef.current) {
       const text = contractRef.current.innerText;
       
-      // Método robusto para iFrames e ambientes com restrição de Clipboard API
+      // Método seguro: cria um elemento temporário para copiar
+      // Isso evita o erro de 'Permissions Policy' no Netlify/Chrome
       const textArea = document.createElement("textarea");
       textArea.value = text;
       
