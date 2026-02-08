@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Printer, Copy, FileText, Wand2, Package, CreditCard, ChevronDown, ChevronUp, Scale } from 'lucide-react';
+import { Printer, Copy, FileText, Wand2, Package, CreditCard, ChevronDown, ChevronUp, Scale, CheckCircle } from 'lucide-react';
 
 const App = () => {
   // Configuração dos Pacotes Baseados no Orçamento
@@ -220,10 +220,33 @@ Formas de pagamento padrão:
   const handleCopy = () => {
     if (contractRef.current) {
       const text = contractRef.current.innerText;
-      navigator.clipboard.writeText(text).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
+      
+      // Método robusto para iFrames e ambientes com restrição de Clipboard API
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      
+      // Garante que o elemento não seja visível visualmente mas faça parte do DOM
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      document.body.appendChild(textArea);
+      
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        } else {
+            console.error("Falha ao copiar texto via execCommand");
+        }
+      } catch (err) {
+        console.error("Erro ao executar comando de cópia: ", err);
+      }
+      
+      document.body.removeChild(textArea);
     }
   };
 
@@ -449,9 +472,16 @@ Formas de pagamento padrão:
             )}
           </section>
 
-          <div className="pt-2 sticky bottom-0 bg-white pb-6 border-t">
-            <button onClick={handlePrint} className="w-full bg-blue-800 hover:bg-blue-900 text-white font-bold py-3 px-4 rounded flex items-center justify-center gap-2 mb-2">
+          <div className="pt-2 sticky bottom-0 bg-white pb-6 border-t flex flex-col gap-2">
+            <button onClick={handlePrint} className="w-full bg-blue-800 hover:bg-blue-900 text-white font-bold py-3 px-4 rounded flex items-center justify-center gap-2">
               <Printer size={20} /> Imprimir / Salvar PDF
+            </button>
+            <button 
+              onClick={handleCopy}
+              className={`w-full font-bold py-2 px-4 rounded border flex items-center justify-center gap-2 transition-colors ${copied ? 'bg-green-100 text-green-700 border-green-300' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+            >
+              {copied ? <CheckCircle size={18} /> : <Copy size={18} />}
+              {copied ? 'Copiado!' : 'Copiar Texto Completo'}
             </button>
           </div>
         </div>
